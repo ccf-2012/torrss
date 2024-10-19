@@ -734,19 +734,18 @@ def rssJob(id):
 
 
 def startApsScheduler():
-    if not ARGS.no_rss:
-        with app.app_context():
-            tasks = RSSTask.query
-            for t in tasks:
-                if not scheduler.get_job(str(t.id)):
-                    logger.info(f"Start rss task: {t.rsslink}")
-                    job = scheduler.add_job(rssJob, 'interval',
-                                            args=[t.id],
-                                            minutes=t.task_interval,
-                                            next_run_time=datetime.now()+timedelta(minutes=15),
-                                            id=str(t.id))
-                    if t.active == 2:
-                        job.pause()
+    with app.app_context():
+        tasks = RSSTask.query
+        for t in tasks:
+            if not scheduler.get_job(str(t.id)):
+                logger.info(f"Start rss task: {t.rsslink}")
+                job = scheduler.add_job(rssJob, 'interval',
+                                        args=[t.id],
+                                        minutes=t.task_interval,
+                                        next_run_time=datetime.now()+timedelta(minutes=15),
+                                        id=str(t.id))
+                if ARGS.no_rss or t.active == 2:
+                    job.pause()
 
     scheduler.start()
     scheduler.print_jobs()
