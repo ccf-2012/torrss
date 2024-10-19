@@ -10,3 +10,4 @@ wtforms
 apscheduler
 lxml
 loguru
+psutil

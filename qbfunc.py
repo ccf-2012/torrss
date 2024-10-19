@@ -151,7 +151,8 @@ def space_for_torrent(client, torrents, entry, size_storage_space):
 
     # for all Downloading torrents in qbit, calculate bytes left to download
     size_left_to_complete = 0
-    uncompleted_torrents = [x for x in torrents if x['state'] == 'downloading']
+    # uncompleted_torrents = [x for x in torrents if (x['state'] == 'downloading'] or x['state'] == 'stalledDL']) ]
+    uncompleted_torrents = [x for x in torrents if x['progress'] < 1]
     for torrent in uncompleted_torrents:
         size_left_to_complete += torrent['amount_left']
         # size_left_to_complete += (torrent['total_size'] - torrent['downloaded'])
