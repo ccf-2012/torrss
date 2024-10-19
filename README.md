@@ -1,5 +1,7 @@
 # TORRSS
 * a RSS client for limite storage machine
+* 适用于小盘机刷流。在添加种子时，根据磁盘剩余空间进行删种，支持 qBittorrent
+
 
 ## Install
 1. if the system don't have `venv`, install it.
