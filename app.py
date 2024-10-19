@@ -58,6 +58,7 @@ class RSSTask(db.Model):
     info_not_regex = db.Column(db.String(120))
     min_imdb = db.Column(db.Float, default=0.0)
     size_min = db.Column(db.Integer, default=2)
+    size_max = db.Column(db.Integer, default=100)
     task_interval = db.Column(db.Integer, default=2)
     total_count = db.Column(db.Integer)
     accept_count = db.Column(db.Integer)
@@ -119,6 +120,7 @@ class RSSTaskForm(Form):
     info_regex = StringField('描述包含')
     info_not_regex = StringField('描述不含')
     size_min = IntegerField('大小 (GB)', default=2)
+    size_max = IntegerField('大小 (GB)', default=100)
     min_imdb = DecimalField('IMDb 大于', validators=[NumberRange(min=0, max=10)])
     task_interval = IntegerField('执行间隔 (分钟)', default=2)
     qbcategory = StringField('加入qBit时带Category')
@@ -256,6 +258,7 @@ def rssNew():
         task.info_not_regex = form.info_not_regex.data
         task.min_imdb = form.min_imdb.data
         task.size_min = form.size_min.data
+        task.size_max = form.size_max.data
         task.task_interval = form.task_interval.data
         task.qbcategory = form.qbcategory.data
         task.total_count = 0
@@ -289,6 +292,7 @@ def rssEdit(id):
     form.info_not_regex.data = task.info_not_regex
     form.min_imdb.data = task.min_imdb
     form.size_min.data = task.size_min
+    form.size_max.data = task.size_max
     form.task_interval.data = task.task_interval
 
     if request.method == 'POST':
@@ -302,6 +306,7 @@ def rssEdit(id):
         task.info_not_regex = form.info_not_regex.data
         task.min_imdb = form.min_imdb.data
         task.size_min = form.size_min.data
+        task.size_max = form.size_max.data
         task.task_interval = form.task_interval.data
         # task.total_count = 0
         # task.accept_count = 0
