@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block content %}
+<nav class="nav nav-tabs justify-content-center">
+	<a class="nav-link active" href="{{ url_for('rssLog') }}">RSS记录</a>
+	<a class="nav-link " href="{{ url_for('rssTaskList') }}">RSS 任务列表</a>
+</nav>
+
+<div class="row mx-2 my-3 justify-content-center">
+
+  <table id="data" class=" order-column" style="width:100%">
+		<thead>
+		  <tr>
+			<th>时间</th>
+			<th>站点</th>
+			<th>标题</th>
+			<th>IMDb</th>
+			<th>Size</th>
+			<th>未收原因</th>
+      <th>操作</th>
+		  </tr>
+		</thead>
+		<tbody>
+  
+		</tbody>
+	  </table>
+</div>
+{% endblock %} 
+
+{% block script %}
+<script>
+    function apiDownloadRssTor(ele, id) {
+      $(ele).parent().css('background-color', 'rgb(254 243 199)');
+      $.ajax({
+          url: '/api/rssmanual',
+          type: 'get',
+          data: { rsslogid: id },
+          contentType: "application/json",
+          success: function (response) {
+              t = JSON.parse(response);
+              if (t.added) {
+                  $(ele).parent().css('background-color', 'darkseagreen');
+                  // $("#msg").hide();
+              }
+              else{
+                  $(ele).parent().css('background-color', 'lightpink');
+              }
+          },
+          complete: function (xhr, textStatus) {
+              if (xhr.status == 402) {
+                  $("#msg").val('下载好像失败了');
+              }
+          }
+      });
+    }
+  $(document).ready(function () {
+    $('#data').DataTable({
+      language: DATATABLE_LANG,
+      "pageLength": 25,
+      autoWidth: false,
+      scrollX: true,
+      full_row_select: false,
+      ajax: '/api/rsslogdata',
+      serverSide: true,
+      order: [[0, 'desc']],
+      columns: [
+        {
+          data: 'addedon',
+          "width": "12%",
+          "render": function (data) {
+            // https://stackoverflow.com/questions/8362952/javascript-output-current-datetime-in-yyyy-mm-dd-hhmsec-format
+            var date = new Date(data);
+            return date.toISOString().slice(0, 19).replace(/-/g, "/").replace("T", " ");
+          }
+        },
+        {
+          data: 'site',
+          "width": "10%"
+        },
+        {
+          data: 'title',
+          "width": "40%",
+          "render": function ( data, type, row, meta ) {
+              if (data) {
+                return '<a href="'+row.infoLink+'" target="_blank">'+row.title+'</a>';
+              }
+              else return ''
+            }
+
+        },
+        {
+          data: 'imdbstr',
+          "width": "8%"
+        },
+        {
+          data: 'size',
+          "width": "10%"
+        },
+        {
+          data: 'reason',
+          "width": "15%"
+        },
+        { data: 'id', searchable: false, 
+          "width": "10%",
+          "render": function (data, type, row) {
+            var linkDownload = '<a href="#" onclick="apiDownloadRssTor(this, \'' + row.id + '\');return false;">' + '下载' + '</a>';
+            var linkStart = ([0,2].includes(row.accept)) ? linkDownload : ''
+            return linkStart;
+          },
+        },
+
+      ],
+      "createdRow": function (row, data, dataIndex) {
+        if (data.accept == 0) {
+          $('td', row).css('background-color', 'rgb(231 231 231)');
+        }
+        else 
+        if  (data.accept == 2) {
+          $('td', row).css('background-color', 'rgb(231 231 231)');
+        }
+      }
+
+    });
+  
+  });
+
+</script>
+{% endblock %}

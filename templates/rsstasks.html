@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block stylesheet %}
+<style>
+</style>
+{% endblock %}
+
+{% block content %}
+<nav class="nav nav-tabs justify-content-center">
+  <a class="nav-link " href="{{ url_for('rssLog') }}">RSS记录</a>
+  <a class="nav-link active" href="{{ url_for('rssTaskList') }}">RSS 任务列表</a>
+</nav>
+
+
+<div class="row mx-2 my-3 justify-content-center">
+  <a class=" " href="{{ url_for('rssNew') }}">+ 新建RSS任务</a>
+
+  <table id="data" class="display order-column" style="width:100%">
+    <thead>
+      <tr>
+        <th>最后更新</th>
+        <th>站点</th>
+        <th>间隔(分钟)</th>
+        <th>下载数</th>
+        <th>标题包含</th>
+        <th>标题不含</th>
+        <th>描述包含</th>
+        <th>描述不含</th>
+        <th>IMDb大于</th>
+        <th>qBit分类</th>
+        <th>操作</th>
+        <th>active</th>
+      </tr>
+    </thead>
+    <tbody>
+
+    </tbody>
+  </table>
+
+</div>
+{% endblock %}
+
+
+{% block script %}
+<script>
+  function rssRunOnceNow(ele, id) {
+      $.ajax({
+        url: '/api/rssrunonce',
+        type: 'get',
+        data: { taskid: id },
+        contentType: "application/json",
+        success: function (response) {
+          // t = JSON.parse(response);
+          ;// $('#data').DataTable().ajax.reload();
+        },
+      });
+  }  
+  function rssTaskToggleActive(ele, id) {
+      $.ajax({
+        url: '/api/rssactivate',
+        type: 'get',
+        data: { taskid: id },
+        contentType: "application/json",
+        success: function (response) {
+          // t = JSON.parse(response);
+          $('#data').DataTable().ajax.reload();
+        },
+      });
+  }  
+  function rssTaskDel(ele, id) {
+    if (confirm("确认删除？")) {
+      $.ajax({
+        url: '/api/rssdel',
+        type: 'get',
+        data: { taskid: id },
+        contentType: "application/json",
+        success: function (response) {
+          // t = JSON.parse(response);
+          $('#data').DataTable().ajax.reload();
+        },
+      });
+    }
+  }
+  $(document).ready(function () {
+    $('#data').DataTable({
+      language: DATATABLE_LANG,
+      "pageLength": 10,
+      "dom": "tip",
+      autoWidth: true,
+      scrollX: false,
+      full_row_select: false,
+      ajax: '/api/rsstasksdata',
+      serverSide: true,
+      order: [[0, 'desc']],
+      columns: [
+        {
+          data: 'last_update',
+          "width": "12%",
+          "render": function (data) {
+            var date = new Date(data);
+            return date.toISOString().slice(0, 19).replace(/-/g, "/").replace("T", " ");
+          }
+        },
+        {
+          data: 'site',
+          "width": "9%"
+        },
+        {
+          data: 'task_interval',
+          "width": "12%"
+        },
+        {
+          data: 'accept_count',
+          "width": "6%"
+        },
+        {
+          data: 'title_regex',
+          orderable: false, searchable: false,
+          "width": "8%"
+        },
+        {
+          data: 'title_not_regex',
+          orderable: false, searchable: false,
+          "width": "8%"
+        },
+        {
+          data: 'info_regex',
+          orderable: false, searchable: false,
+          "width": "8%"
+        },
+        {
+          data: 'info_not_regex',
+          orderable: false, searchable: false,
+          "width": "8%"
+        },
+        {
+          data: 'min_imdb',
+          orderable: false, searchable: false,
+          "width": "8%"
+        },
+        {
+          data: 'qbcategory',
+          orderable: false, searchable: false,
+          "width": "8%"
+        },
+        {
+          data: 'id', searchable: false,
+          "width": "18%",
+          "render": function (data, type, row) {
+            var tstr = (row.active == 2) ? '恢复' : '暂停'
+            // var linkDelete = '<a href="/rssdel/' + row.id + '">删除</a>';
+            var linkDelete = '<a href="#" onclick="rssTaskDel(this, \'' + row.id + '\');return false;">删除</a>';
+            // var linkToggle = '<a href="/rssactivate/' + row.id + '">' + tstr + '</a>';
+            var linkToggle = '<a href="#" onclick="rssTaskToggleActive(this, \'' + row.id + '\');return false;">' + tstr + '</a>';
+            var linkEdit = '<a href="/rssedit/' + row.id + '">' + '编辑' + '</a>';
+            // var linkRunOnce = '<a href="/rssrunonce/' + row.id + '">' + '运行' + '</a>';
+            var linkRunOnce = '<a href="#" onclick="rssRunOnceNow(this, \'' + row.id + '\');return false;">运行</a>';
+            return linkToggle + " | " + linkRunOnce + " | " + linkEdit + " | " + linkDelete;
+          },
+        },
+        { data: 'active', 'visible': false, searchable: false },
+      ],
+      "createdRow": function (row, data, dataIndex) {
+        if (data.active == 2) {
+          // $(row).addClass('redClass');
+          $('td', row).css('background-color', 'rgb(231 231 231)');
+        }
+      },
+      drawCallback: function (settings) {
+        var pagination = $(this).closest('.dataTables_wrapper').find('.dataTables_paginate');
+        pagination.toggle(this.api().page.info().pages > 1);
+      }
+    });
+
+  });
+
+</script>
+{% endblock %}
