@@ -734,18 +734,19 @@ def rssJob(id):
 
 
 def startApsScheduler():
-    with app.app_context():
-        tasks = RSSTask.query
-        for t in tasks:
-            if not scheduler.get_job(str(t.id)):
-                logger.info(f"Start rss task: {t.rsslink}")
-                job = scheduler.add_job(rssJob, 'interval',
-                                        args=[t.id],
-                                        minutes=t.task_interval,
-                                        next_run_time=datetime.now()+timedelta(minutes=15),
-                                        id=str(t.id))
-                if t.active == 2:
-                    job.pause()
+    if not ARGS.no_rss:
+        with app.app_context():
+            tasks = RSSTask.query
+            for t in tasks:
+                if not scheduler.get_job(str(t.id)):
+                    logger.info(f"Start rss task: {t.rsslink}")
+                    job = scheduler.add_job(rssJob, 'interval',
+                                            args=[t.id],
+                                            minutes=t.task_interval,
+                                            next_run_time=datetime.now()+timedelta(minutes=15),
+                                            id=str(t.id))
+                    if t.active == 2:
+                        job.pause()
 
     scheduler.start()
     scheduler.print_jobs()
@@ -776,8 +777,7 @@ def main():
     if not myconfig.CONFIG.basicAuthUser or not myconfig.CONFIG.basicAuthPass:
         print('set user/pasword in config.ini or use "-G" argument')
         return
-    if not ARGS.no_rss:
-        startApsScheduler()
+    startApsScheduler()
 # https://stackoverflow.com/questions/14874782/apscheduler-in-flask-executes-twice
     app.run(host='0.0.0.0', port=5009, debug=True, use_reloader=False)
 

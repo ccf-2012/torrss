@@ -179,7 +179,7 @@ def space_for_torrent(client, torrents, entry, size_storage_space):
     for tor_complete in completed_torrents:
         torrents_to_del.append(tor_complete)
         size_storage_space += tor_complete['downloaded']
-        if size_storage_space - size_left_to_complete - size_accept - size_new_torrent > DISK_SPACE_MARGIN:
+        if size_storage_space - size_left_to_complete - size_new_torrent > DISK_SPACE_MARGIN:
             for tor_to_del in torrents_to_del:
                 logger.info('Deleting: %s to free %s.' % (
                     tor_to_del['name'], convert_size(tor_to_del['downloaded'])))
