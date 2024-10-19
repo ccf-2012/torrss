@@ -156,12 +156,12 @@ def space_for_torrent(client, torrents, entry, size_storage_space):
     for torrent in uncompleted_torrents:
         size_left_to_complete += torrent['amount_left']
         # size_left_to_complete += (torrent['total_size'] - torrent['downloaded'])
-    logger.info('uncomplete download: %s.' %
+    logger.info('Uncomplete download: %s.' %
                 convert_size(size_left_to_complete))
 
     remain_space = size_storage_space - size_left_to_complete 
     logger.info('remain space: %s - %s - %s = %s.' % (convert_size(size_storage_space), convert_size(
-        size_left_to_complete), convert_size(size_new_torrent), convert_size(remain_space)))
+        size_left_to_complete), convert_size(size_new_torrent), convert_size(remain_space - size_new_torrent)))
     if remain_space - size_new_torrent > DISK_SPACE_MARGIN:
         # if size_storage_space - size_left_to_complete - size_new_torrent > DISK_SPACE_MARGIN:
         # enough space to add the new torrent
@@ -173,13 +173,17 @@ def space_for_torrent(client, torrents, entry, size_storage_space):
         key=lambda t: t['seeding_time'],
         reverse=True
     )
+    logger.info('%s finished torrents. ' % len(completed_torrents))
 
     # Loop through completed torrents and delete until there is enough space
     torrents_to_del = []
+    space_to_del = 0
     for tor_complete in completed_torrents:
         torrents_to_del.append(tor_complete)
-        size_storage_space += tor_complete['downloaded']
-        if size_storage_space - size_left_to_complete - size_new_torrent > DISK_SPACE_MARGIN:
+        space_to_del += tor_complete['downloaded']
+        logger.info('  >> %s : %s ' % (tor_complete['name'], convert_size(tor_complete['downloaded'])))
+
+        if size_storage_space + space_to_del - size_left_to_complete - size_new_torrent > DISK_SPACE_MARGIN:
             for tor_to_del in torrents_to_del:
                 logger.info('Deleting: %s to free %s.' % (
                     tor_to_del['name'], convert_size(tor_to_del['downloaded'])))
@@ -190,6 +194,10 @@ def space_for_torrent(client, torrents, entry, size_storage_space):
             # size_storage_space = get_free_space(client)
             # logger.info('Free space: %s.' % convert_size(size_storage_space))
             return True
+    remain_space = size_storage_space + space_to_del - size_left_to_complete
+    logger.info('space not enough: %s + %s - %s = %s.' % (convert_size(size_storage_space), convert_size(space_to_del), convert_size(
+        size_left_to_complete), convert_size(remain_space)))
+
     return False
 
 
