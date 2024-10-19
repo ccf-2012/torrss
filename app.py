@@ -57,7 +57,8 @@ class RSSTask(db.Model):
     title_not_regex = db.Column(db.String(120))
     info_not_regex = db.Column(db.String(120))
     min_imdb = db.Column(db.Float, default=0.0)
-    task_interval = db.Column(db.Integer)
+    size_min = db.Column(db.Integer, default=2)
+    task_interval = db.Column(db.Integer, default=2)
     total_count = db.Column(db.Integer)
     accept_count = db.Column(db.Integer)
     qbcategory = db.Column(db.String(64))
@@ -117,8 +118,9 @@ class RSSTaskForm(Form):
     title_not_regex = StringField('标题不含')
     info_regex = StringField('描述包含')
     info_not_regex = StringField('描述不含')
+    size_min = IntegerField('大小 (GB)', default=2)
     min_imdb = DecimalField('IMDb 大于', validators=[NumberRange(min=0, max=10)])
-    task_interval = IntegerField('执行间隔 (分钟)', validators=[DataRequired()])
+    task_interval = IntegerField('执行间隔 (分钟)', default=2)
     qbcategory = StringField('加入qBit时带Category')
     submit = SubmitField("保存设置")
 
@@ -253,6 +255,7 @@ def rssNew():
         task.title_not_regex = form.title_not_regex.data
         task.info_not_regex = form.info_not_regex.data
         task.min_imdb = form.min_imdb.data
+        task.size_min = form.size_min.data
         task.task_interval = form.task_interval.data
         task.qbcategory = form.qbcategory.data
         task.total_count = 0
@@ -285,6 +288,7 @@ def rssEdit(id):
     form.title_not_regex.data = task.title_not_regex
     form.info_not_regex.data = task.info_not_regex
     form.min_imdb.data = task.min_imdb
+    form.size_min.data = task.size_min
     form.task_interval.data = task.task_interval
 
     if request.method == 'POST':
@@ -297,6 +301,7 @@ def rssEdit(id):
         task.title_not_regex = form.title_not_regex.data
         task.info_not_regex = form.info_not_regex.data
         task.min_imdb = form.min_imdb.data
+        task.size_min = form.size_min.data
         task.task_interval = form.task_interval.data
         # task.total_count = 0
         # task.accept_count = 0
@@ -627,15 +632,21 @@ def processRssFeeds(rsstask):
         logger.info("%d: %s (%s)" % (rssFeedSum, item.title,
                                      datetime.now().strftime("%H:%M:%S")))
 
+        size_item = tryint(item.links[1]['length'])
         dbrssitem = RSSHistory(site=rsstask.site,
                                tid=rsstask.id,
                                title=item.title,
                                infoLink=item.link,
                                downloadLink=item.links[1]['href'],
-                               size=item.links[1]['length'])
+                               size=size_item)
 
         db.session.add(dbrssitem)
         db.session.commit()
+
+        if size_item / 1024 / 1024 < rsstask.size_min:
+            dbrssitem.reason = 'SIZE_MIN'
+            db.session.commit()
+            continue
 
         if rsstask.title_regex:
             if not re.search(rsstask.title_regex, item.title, re.I):
