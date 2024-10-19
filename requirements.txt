@@ -1,0 +1,12 @@
+sqlalchemy<2.0
+Flask-SQLAlchemy
+flask_httpauth
+flask
+qbittorrent-api
+requests
+urllib3
+feedparser
+wtforms
+apscheduler
+lxml
+loguru
