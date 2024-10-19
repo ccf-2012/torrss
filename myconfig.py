@@ -160,7 +160,7 @@ def updateConfigSettings(cfgFile, linkDir, bracket, tmdbLang, lang, genre, tmdb_
     CONFIG.notifyPlex = config['TORCP'].getboolean('notifyPlex', False)
 
 
-def updateQBSettings(cfgFile, qbhost, qbport, qbuser, qbpass, qbapirun, dockerFrom, dockerTo):
+def updateQBSettings(cfgFile, qbhost, qbport, qbuser, qbpass):
     config = configparser.ConfigParser()
     config.read(cfgFile)
     if not config.has_section('QBIT'):
@@ -169,9 +169,6 @@ def updateQBSettings(cfgFile, qbhost, qbport, qbuser, qbpass, qbapirun, dockerFr
     config.set('QBIT', 'port', qbport)
     config.set('QBIT', 'user', qbuser)
     config.set('QBIT', 'pass', qbpass)
-    config.set('QBIT', 'apirun', qbapirun)
-    config.set('QBIT', 'dockerFrom', os.path.normpath(dockerFrom))
-    config.set('QBIT', 'dockerTo', os.path.normpath(dockerTo))
     with open(cfgFile, 'w') as f:
         config.write(f)
 
@@ -179,7 +176,4 @@ def updateQBSettings(cfgFile, qbhost, qbport, qbuser, qbpass, qbapirun, dockerFr
     CONFIG.qbPort = config['QBIT'].get('port', '')
     CONFIG.qbUser = config['QBIT'].get('user', '')
     CONFIG.qbPass = config['QBIT'].get('pass', '')
-    CONFIG.apiRunProgram = config['QBIT'].get('apirun', 'False')
-    CONFIG.dockerFrom = config['QBIT'].get('dockerFrom', '')
-    CONFIG.dockerTo = config['QBIT'].get('dockerTo', '')
 

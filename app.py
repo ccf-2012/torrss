@@ -1,6 +1,5 @@
 from flask import Flask, render_template, jsonify, redirect, request, abort
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func
 from flask_httpauth import HTTPBasicAuth
 from http.cookies import SimpleCookie
 
@@ -34,10 +33,18 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 auth = HTTPBasicAuth()
+
+
+@auth.verify_password
+def verify_password(username, password):
+    if username == myconfig.CONFIG.basicAuthUser and password == myconfig.CONFIG.basicAuthPass:
+        return username
+
+
 scheduler = BackgroundScheduler(job_defaults={'max_instances': 3})
 
 
-LOG_FILE_NAME = "torll.log"
+LOG_FILE_NAME = "torrss.log"
 
 
 class RSSTask(db.Model):
@@ -120,17 +127,11 @@ def initDatabase():
     with app.app_context():
         db.create_all()
 
+
 @app.route('/')
 @auth.login_required
 def index():
     return render_template('rsstasks.html')
-
-
-@auth.verify_password
-def verify_password(username, password):
-    if username == myconfig.CONFIG.basicAuthUser and password == myconfig.CONFIG.basicAuthPass:
-        return username
-
 
 
 @app.route('/api/rsslogdata')
@@ -375,9 +376,6 @@ def apiRunRssNow():
     return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
 
 
-
-
-
 class QBSettingForm(Form):
     qbhost = StringField('qBit 主机IP', validators=[DataRequired()])
     qbport = StringField('qBit 端口')
@@ -385,11 +383,11 @@ class QBSettingForm(Form):
     qbpass = StringField('qBit 密码', widget=PasswordInput(
         hide_value=False), validators=[DataRequired()])
     submit = SubmitField("保存设置")
-    qbapirun = RadioField('qBit 种子完成后调 API, 还是执行本地 rcp.sh 脚本？', choices=[
-        ('True', '调用 API, 适用于 qBit 跑在docker里面的情况'),
-        ('False', '直接执行本地 rcp.sh 脚本')])
-    dockerFrom = StringField('若 qBit 在docker中，则须设置映射将docker中的路径：')
-    dockerTo = StringField('转换为以下路径：')
+    # qbapirun = RadioField('qBit 种子完成后调 API, 还是执行本地 rcp.sh 脚本？', choices=[
+    #     ('True', '调用 API, 适用于 qBit 跑在docker里面的情况'),
+    #     ('False', '直接执行本地 rcp.sh 脚本')])
+    # dockerFrom = StringField('若 qBit 在docker中，则须设置映射将docker中的路径：')
+    # dockerTo = StringField('转换为以下路径：')
 
 
 @app.route('/qbsetting', methods=['POST', 'GET'])
@@ -400,9 +398,9 @@ def qbitSetting():
     form.qbport.data = myconfig.CONFIG.qbPort
     form.qbuser.data = myconfig.CONFIG.qbUser
     form.qbpass.data = myconfig.CONFIG.qbPass
-    form.qbapirun.data = myconfig.CONFIG.apiRunProgram
-    form.dockerFrom.data = myconfig.CONFIG.dockerFrom
-    form.dockerTo.data = myconfig.CONFIG.dockerTo
+    # form.qbapirun.data = myconfig.CONFIG.apiRunProgram
+    # form.dockerFrom.data = myconfig.CONFIG.dockerFrom
+    # form.dockerTo.data = myconfig.CONFIG.dockerTo
     msg = ''
     if request.method == 'POST':
         form = QBSettingForm(request.form)
@@ -411,32 +409,32 @@ def qbitSetting():
                                   form.qbport.data,
                                   form.qbuser.data,
                                   form.qbpass.data,
-                                  form.qbapirun.data,
-                                  form.dockerFrom.data,
-                                  form.dockerTo.data,
+                                #   form.qbapirun.data,
+                                #   form.dockerFrom.data,
+                                #   form.dockerTo.data,
                                   )
-        if form.qbapirun.data == 'True':
-            authstr = '-u %s:%s ' % (myconfig.CONFIG.basicAuthUser,
-                                     myconfig.CONFIG.basicAuthPass)
-            apiurl = 'http://%s:5006/api/torcp2' % (form.qbhost.data)
-            postargs = '-d torhash=%I '
-            progstr = 'curl ' + authstr + postargs + apiurl
-        else:
-            fn = os.path.join(os.path.dirname(__file__), "rcp.sh")
-            progstr = 'sh ' + fn + ' "%I" '
-            scriptpath = os.path.dirname(__file__)
-            with open(fn, 'w') as f:
-                f.write(
-                    f"#!/bin/sh\npython3 {os.path.join(scriptpath, 'rcp.py')}  -I $1 >>{os.path.join(scriptpath, 'rcp2.log')} 2>>{os.path.join(scriptpath, 'rcp2e.log')}\n")
-                f.close()
-            # import stat
-            # os.chmod(fn, stat.S_IXUSR|stat.S_IXGRP|stat.S_IXOTH)
+        # if form.qbapirun.data == 'True':
+        #     authstr = '-u %s:%s ' % (myconfig.CONFIG.basicAuthUser,
+        #                              myconfig.CONFIG.basicAuthPass)
+        #     apiurl = 'http://%s:5006/api/torcp2' % (form.qbhost.data)
+        #     postargs = '-d torhash=%I '
+        #     progstr = 'curl ' + authstr + postargs + apiurl
+        # else:
+        #     fn = os.path.join(os.path.dirname(__file__), "rcp.sh")
+        #     progstr = 'sh ' + fn + ' "%I" '
+        #     scriptpath = os.path.dirname(__file__)
+        #     with open(fn, 'w') as f:
+        #         f.write(
+        #             f"#!/bin/sh\npython3 {os.path.join(scriptpath, 'rcp.py')}  -I $1 >>{os.path.join(scriptpath, 'rcp2.log')} 2>>{os.path.join(scriptpath, 'rcp2e.log')}\n")
+        #         f.close()
+        #     # import stat
+        #     # os.chmod(fn, stat.S_IXUSR|stat.S_IXGRP|stat.S_IXOTH)
 
-        r = qbfunc.setAutoRunProgram(progstr)
-        if r:
-            msg = 'success'
-        else:
-            msg = 'failed'
+        # r = qbfunc.setAutoRunProgram(progstr)
+        # if r:
+        #     msg = 'success'
+        # else:
+        #     msg = 'failed'
     return render_template('qbsetting.html', form=form, msg=msg)
 
 
@@ -515,7 +513,7 @@ def genrSiteId(detailLink, imdbstr):
     return siteAbbrev + "_" + sid
 
 
-def addTorrent(dl_entry):
+def addTorrent(dl_entry,  size_storage_space):
     if (not myconfig.CONFIG.qbServer):
         return 400
 
@@ -525,10 +523,11 @@ def addTorrent(dl_entry):
     if not myconfig.CONFIG.dryrun:
         logger.info("   >> Entry: " + dl_entry.siteid_str)
 
-        if not qbfunc.addQbitWithTag(dl_entry):
+        if not qbfunc.addQbitWithTag(dl_entry, size_storage_space):
             return 400
     else:
-        logger.info("   >> DRYRUN: " + dl_entry.siteid_str + "\n   >> " + dl_entry.downlink)
+        logger.info("   >> DRYRUN: " + dl_entry.siteid_str +
+                    "\n   >> " + dl_entry.downlink)
 
     return 201
 
@@ -601,8 +600,8 @@ def processRssFeeds(rsstask):
     feed = feedparser.parse(rsstask.rsslink)
     rssFeedSum = 0
     rssAccept = 0
-    # with app.app_context():
 
+    size_storage_space = qbfunc.get_free_space()
     for item in feed.entries:
         rssFeedSum += 1
         if not hasattr(item, 'id'):
@@ -708,9 +707,10 @@ def processRssFeeds(rsstask):
         dl_entry.siteid_str = siteIdStr
         dl_entry.label = qbcat
 
-        r = addTorrent(dl_entry)
+        r = addTorrent(dl_entry, size_storage_space)
         if r == 201:
             # Downloaded
+            size_storage_space -=  dl_entry.size
             dbrssitem.accept = 3
             rssAccept += 1
         else:

@@ -1,9 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-<nav class="nav nav-tabs justify-content-center">
-	<a class="nav-link active" href="{{ url_for('qbitSetting') }}">qBittorrent 设置</a>
-</nav>
 
 
 <div class="row my-3 justify-content-center">
@@ -34,23 +31,6 @@
             <div class="form-group mb-3">
                 {{form.qbpass.label(class='form-label')}} 
                 {{ form.qbpass(class="form-control") }}
-            </div> 
-            {{form.qbapirun.label(class='form-check-label')}} 
-            <div class="form-check mb-3">
-                {% for subfield in form.qbapirun %}
-                    <div class="form-group">
-                        {{ subfield }}
-                        {{ subfield.label }}
-                    </div>
-                {% endfor %}   
-            </div> 
-            <div class="form-group mb-3">
-                {{form.dockerFrom.label(class='form-label')}} 
-                {{ form.dockerFrom(class="form-control") }}
-            </div>
-            <div class="form-group mb-3">
-                {{form.dockerTo.label(class='form-label')}} 
-                {{ form.dockerTo(class="form-control") }}
             </div> 
 
 
