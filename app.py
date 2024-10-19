@@ -534,7 +534,7 @@ def addTorrent(dl_entry,  size_storage_space):
         logger.info("   >> Entry: " + dl_entry.siteid_str)
 
         if not qbfunc.addQbitWithTag(dl_entry, size_storage_space):
-            return 400
+            return 301
     else:
         logger.info("   >> DRYRUN: " + dl_entry.siteid_str +
                     "\n   >> " + dl_entry.downlink)
@@ -729,8 +729,10 @@ def processRssFeeds(rsstask):
             size_storage_space -=  dl_entry.size
             dbrssitem.accept = 3
             rssAccept += 1
+        elif r == 301:
+            dbrssitem.reason = 'disk space'
         else:
-            dbrssitem.reason = 'qBit Error'
+            dbrssitem.reason = 'qbit'
 
         db.session.commit()
 

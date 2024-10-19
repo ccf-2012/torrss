@@ -220,12 +220,12 @@ def addQbitWithTag(entry, size_storage_space):
     except:
         logger.debug('Fail to load torrent list.')
         # client.disconnect()
-        return
+        return False
 
     enough_space = space_for_torrent(qbClient, torrents, entry, size_storage_space)
     if not enough_space:
         logger.info('No enough disk space left, skip torrent: {}', entry.title)
-        return
+        return False
 
     try:
         if entry.siteid_str:
