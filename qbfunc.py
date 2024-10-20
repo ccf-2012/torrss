@@ -161,7 +161,7 @@ def space_for_torrent(client, torrents, entry, size_storage_space):
     remain_space = size_storage_space - size_left_to_complete
     logger.info(f'   >> (hdd_free) {human_size(size_storage_space)} - (uncomplete) {human_size(size_left_to_complete)} - '
                 f'(new_tor) {human_size(size_new_torrent)} = {human_size(remain_space - size_new_torrent)}.')
-    logger.info(f'  (remain_space - size_new_torrent) = {remain_space - size_new_torrent}.')
+    # logger.info(f'  (remain_space - size_new_torrent) = {remain_space - size_new_torrent}.')
     if (remain_space - size_new_torrent) > DISK_SPACE_MARGIN:
         # if size_storage_space - size_left_to_complete - size_new_torrent > DISK_SPACE_MARGIN:
         # enough space to add the new torrent
