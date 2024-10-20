@@ -448,6 +448,47 @@ def qbitSetting():
     return render_template('qbsetting.html', form=form, msg=msg)
 
 
+# https://stackoverflow.com/questions/136168/get-last-n-lines-of-a-file-similar-to-tail
+def tail(f, lines=1, _buffer=4098):
+    """Tail a file and get X lines from the end"""
+    # place holder for the lines found
+    lines_found = []
+
+    # block counter will be multiplied by buffer
+    # to get the block size from the end
+    block_counter = -1
+
+    # loop until we find X lines
+    while len(lines_found) < lines:
+        try:
+            f.seek(block_counter * _buffer, os.SEEK_END)
+        except IOError:  # either file is too small, or too many lines requested
+            f.seek(0)
+            lines_found = f.readlines()
+            break
+
+        lines_found = f.readlines()
+
+        # we found enough lines, get out
+        # Removed this line because it was redundant the while will catch
+        # it, I left it for history
+        # if len(lines_found) > lines:
+        #    break
+
+        # decrement the block counter to get the
+        # next X bytes
+        block_counter -= 1
+
+    return lines_found[-lines:]
+
+
+@app.route('/logview')
+def logview():
+    with open(LOG_FILE_NAME, "r") as f: 
+        lines = tail(f, 100)
+    # return render_template('logview.html')
+    return render_template("logview.html", content=''.join(lines))
+
 # --------------------------------------
 
 
@@ -531,13 +572,11 @@ def addTorrent(dl_entry,  size_storage_space):
         return 402
 
     if not myconfig.CONFIG.dryrun:
-        logger.info("   >> Entry: " + dl_entry.siteid_str)
-
         if not qbfunc.addQbitWithTag(dl_entry, size_storage_space):
             return 301
     else:
-        logger.info("   >> DRYRUN: " + dl_entry.siteid_str +
-                    "\n   >> " + dl_entry.downlink)
+        logger.info("   >> DRYRUN: " + dl_entry.title +
+                    "\n   >> " + dl_entry.siteid_str)
 
     return 201
 
@@ -605,6 +644,9 @@ def parseInfoPageIMDbId(doc):
         imdbstr = m1[1]
     return imdbstr
 
+def remove_passkey_from_url(url):
+    # 使用正则表达式匹配并去除 passkey 参数及其值
+    return re.sub(r'&passkey=[^&]*', '', url)
 
 def processRssFeeds(rsstask):
     feed = feedparser.parse(rsstask.rsslink)
@@ -648,8 +690,9 @@ def processRssFeeds(rsstask):
         db.session.add(dbrssitem)
         db.session.commit()
 
-        if size_item / 1024 / 1024 < rsstask.size_min:
-            dbrssitem.reason = 'SIZE_MIN'
+        size_gb = size_item / 1024 / 1024
+        if size_gb < rsstask.size_min or size_gb > rsstask.size_max:
+            dbrssitem.reason = 'SIZE_MIN_MAX'
             db.session.commit()
             continue
 
@@ -700,8 +743,6 @@ def processRssFeeds(rsstask):
 
         rssDownloadLink = item.links[1]['href']
         dbrssitem.accept = 2
-        logger.info('   %s (%s), %s' %
-                    (imdbstr, humanSize(int(dbrssitem.size)), rssDownloadLink))
 
         # if checkMediaDbNameDupe(item.title):
         #     dbrssitem.reason = "Name dupe"
@@ -713,6 +754,9 @@ def processRssFeeds(rsstask):
         #     dbrssitem.reason = 'TMDb dupe'
         #     db.session.commit()
         #     continue
+        logger.info('   >> %s (%s), %s' %
+                    (imdbstr, humanSize(int(dbrssitem.size)), remove_passkey_from_url(rssDownloadLink)))
+        logger.info("   >> Entry: " + dl_entry.siteid_str)
 
         qbcat = rsstask.qbcategory if rsstask.qbcategory else ''
         dl_entry = qbfunc.DownloadEntry()
@@ -722,6 +766,7 @@ def processRssFeeds(rsstask):
         dl_entry.imdb = imdbstr
         dl_entry.siteid_str = siteIdStr
         dl_entry.label = qbcat
+
 
         r = addTorrent(dl_entry, size_storage_space)
         if r == 201:
