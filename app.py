@@ -674,6 +674,7 @@ def processRssFeeds(rsstask):
 
         if existsInRssHistory(item.title):
             # print("   >> exists in rss history, skip")
+            # logger.info("   >> Skip: EXISTS" )
             continue
 
         logger.info("%d: %s (%s)" % (rssFeedSum, item.title,
@@ -694,18 +695,21 @@ def processRssFeeds(rsstask):
         if size_gb < rsstask.size_min or size_gb > rsstask.size_max:
             dbrssitem.reason = 'SIZE_MIN_MAX'
             db.session.commit()
+            logger.info("   >> Skip: SIZE_MIN_MAX " )
             continue
 
         if rsstask.title_regex:
             if not re.search(rsstask.title_regex, item.title, re.I):
                 dbrssitem.reason = 'TITLE_REGEX'
                 db.session.commit()
+                logger.info("   >> Skip: TITLE_REGEX " )
                 continue
 
         if rsstask.title_not_regex:
             if re.search(rsstask.title_not_regex, item.title, re.I):
                 dbrssitem.reason = 'TITLE_NOT_REGEX'
                 db.session.commit()
+                logger.info("   >> Skip: TITLE_NOT_REGEX " )
                 continue
 
         imdbstr = ''
@@ -715,6 +719,7 @@ def processRssFeeds(rsstask):
             if not doc:
                 dbrssitem.reason = 'Fetch info page failed'
                 db.session.commit()
+                logger.info("   >> Skip: Fetch info page failed" )
                 continue
             imdbstr = parseInfoPageIMDbId(doc)
             dbrssitem.imdbstr = imdbstr
@@ -729,6 +734,7 @@ def processRssFeeds(rsstask):
                 if re.search(rsstask.info_not_regex, doc, flags=re.A):
                     dbrssitem.reason = 'INFO_NOT_REGEX'
                     db.session.commit()
+                    logger.info("   >> Skip: INFO_NOT_REGEX" )
                     continue
             if rsstask.min_imdb:
                 imdbval, doubanval = parseInfoPageIMDbval(doc)
@@ -737,6 +743,7 @@ def processRssFeeds(rsstask):
                     dbrssitem.reason = "IMDb: %s, douban: %s" % (
                         imdbval, doubanval)
                     db.session.commit()
+                    logger.info("   >> Skip: MIN_IMDb" )
                     continue
 
         siteIdStr = genrSiteId(item.link, imdbstr)
