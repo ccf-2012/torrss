@@ -186,14 +186,14 @@ def space_for_torrent(client, torrents, entry, size_storage_space):
         space_to_del += tor_complete['downloaded']
         logger.info(
             f'   >> {tor_complete["name"]} : {human_size(tor_complete["downloaded"])} ')
-        logger.info(f'   :: size_storage_space({size_storage_space}) + space_to_del({space_to_del}) '+
-                    f'- size_left_to_complete ({size_left_to_complete}) ' +
-                    f'- size_new_torrent ({size_new_torrent}) '+
+        logger.info(f'   :: size_storage_space({human_size(size_storage_space)}) + space_to_del({human_size(space_to_del)}) '
+                    f'- size_left_to_complete ({human_size(size_left_to_complete)}) '
+                    f'- size_new_torrent ({human_size(size_new_torrent)}) '
                     f'= {human_size(size_storage_space + space_to_del - size_left_to_complete - size_new_torrent)}')
         if (size_storage_space + space_to_del - size_left_to_complete - size_new_torrent) > DISK_SPACE_MARGIN:
             for tor_to_del in torrents_to_del:
-                logger.info(
-                    f'Deleting: {tor_to_del["name"]} to free {human_size(tor_to_del["downloaded"])}.')
+                logger.warning(
+                    f'   Deleting: {tor_to_del["name"]} to free {human_size(tor_to_del["downloaded"])}.')
                 qbDeleteTorrent(client, tor_to_del['hash'])
                 time.sleep(3)
             # Enough space now available, add the new torrent
