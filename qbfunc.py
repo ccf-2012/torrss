@@ -104,7 +104,7 @@ def qbDeleteTorrent(qbClient, tor_hash):
         print('There was an error during client.torrents_delete: %s', ex)
 
 
-def convert_size(size_bytes):
+def human_size(size_bytes):
     if size_bytes == 0:
         return "0B"
     sign = ''
@@ -134,7 +134,7 @@ def get_free_space():
 
     if not qbClient:
         return False
-    
+
     try:
         r = qbClient.sync_maindata(rid=0)
         return r['server_state']['free_space_on_disk']
@@ -158,14 +158,15 @@ def space_for_torrent(client, torrents, entry, size_storage_space):
     # logger.info('Uncomplete download: %s.' %
     #             convert_size(size_left_to_complete))
 
-    remain_space = size_storage_space - size_left_to_complete 
-    logger.info( f'   >> (hdd_free) {convert_size(size_storage_space)} - (uncomplete) {convert_size(size_left_to_complete)} - '
-                f'(new_tor) {convert_size(size_new_torrent)} = {convert_size(remain_space - size_new_torrent)}.')
+    remain_space = size_storage_space - size_left_to_complete
+    logger.info(f'   >> (hdd_free) {human_size(size_storage_space)} - (uncomplete) {human_size(size_left_to_complete)} - '
+                f'(new_tor) {human_size(size_new_torrent)} = {human_size(remain_space - size_new_torrent)}.')
 
     if (remain_space - size_new_torrent) > DISK_SPACE_MARGIN:
         # if size_storage_space - size_left_to_complete - size_new_torrent > DISK_SPACE_MARGIN:
         # enough space to add the new torrent
-        logger.info(f'   => Add : ({convert_size(size_new_torrent)}) {entry.title}.')
+        logger.info(
+            f'   => Add : ({human_size(size_new_torrent)}) {entry.title}.')
         return True
 
     # Sort completed torrents by seeding time
@@ -174,7 +175,8 @@ def space_for_torrent(client, torrents, entry, size_storage_space):
         key=lambda t: t['seeding_time'],
         reverse=True
     )
-    logger.info(f'   -- {len(completed_torrents)}/{len(torrents)} finished/total torrents.')
+    logger.info(
+        f'   -- {len(completed_torrents)}/{len(torrents)} finished/total torrents.')
 
     # Loop through completed torrents and delete until there is enough space
     torrents_to_del = []
@@ -182,11 +184,16 @@ def space_for_torrent(client, torrents, entry, size_storage_space):
     for tor_complete in completed_torrents:
         torrents_to_del.append(tor_complete)
         space_to_del += tor_complete['downloaded']
-        logger.info(f'   >> {tor_complete["name"]} : {convert_size(tor_complete["downloaded"])} ')
-
+        logger.info(
+            f'   >> {tor_complete["name"]} : {human_size(tor_complete["downloaded"])} ')
+        logger.info(f'   :: size_storage_space({size_storage_space}) + space_to_del({space_to_del}) '+
+                    '- size_left_to_complete ({size_left_to_complete}) ' +
+                    '- size_new_torrent ({size_new_torrent}) '+
+                    '= {human_size(size_storage_space + space_to_del - size_left_to_complete - size_new_torrent)}')
         if (size_storage_space + space_to_del - size_left_to_complete - size_new_torrent) > DISK_SPACE_MARGIN:
             for tor_to_del in torrents_to_del:
-                logger.info(f'Deleting: {tor_to_del["name"]} to free {convert_size(tor_to_del["downloaded"])}.')
+                logger.info(
+                    f'Deleting: {tor_to_del["name"]} to free {human_size(tor_to_del["downloaded"])}.')
                 qbDeleteTorrent(client, tor_to_del['hash'])
                 time.sleep(3)
             # Enough space now available, add the new torrent
@@ -223,7 +230,8 @@ def addQbitWithTag(entry, size_storage_space):
         return False
 
     # logger.info(f'   >> Free space: {convert_size(size_storage_space)}.')
-    enough_space = space_for_torrent(qbClient, torrents, entry, size_storage_space)
+    enough_space = space_for_torrent(
+        qbClient, torrents, entry, size_storage_space)
     if not enough_space:
         logger.info(f'   !! No enough space. Skip: {entry.title}')
         return False
@@ -244,9 +252,11 @@ def addQbitWithTag(entry, size_storage_space):
                 use_auto_torrent_management=False)
         if 'OK' in result.upper():
             pass
-            logger.success('   >> Torrent added.')
+            logger.success(
+                f'   >> Torrent added: {entry.title} ({human_size(entry.size)})')
         else:
-            logger.warning('   >> Torrent not added! something wrong with qb api ...')
+            logger.warning(
+                '   >> Torrent not added! something wrong with qb api ...')
     except Exception as e:
         logger.error('   >> Torrent not added! Exception: '+str(e))
         return False
