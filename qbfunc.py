@@ -7,7 +7,7 @@ import math
 import time
 from loguru import logger
 logger = logger.bind(name='qbittorrent_mod')
-DISK_SPACE_MARGIN = 20048000000  # 2G before disk full
+DISK_SPACE_MARGIN = 2004800000  # 2G before disk full
 
 
 def getTorrentFirstTracker(torrent):
@@ -130,10 +130,10 @@ def get_free_space():
         qbClient.auth_log_in()
     except qbittorrentapi.LoginFailed as e:
         print(e)
-        return False
+        return -1
 
     if not qbClient:
-        return False
+        return -1
 
     try:
         r = qbClient.sync_maindata(rid=0)
@@ -161,7 +161,7 @@ def space_for_torrent(client, torrents, entry, size_storage_space):
     remain_space = size_storage_space - size_left_to_complete
     logger.info(f'   >> (hdd_free) {human_size(size_storage_space)} - (uncomplete) {human_size(size_left_to_complete)} - '
                 f'(new_tor) {human_size(size_new_torrent)} = {human_size(remain_space - size_new_torrent)}.')
-
+    logger.info(f'  (remain_space - size_new_torrent) = {remain_space - size_new_torrent}.')
     if (remain_space - size_new_torrent) > DISK_SPACE_MARGIN:
         # if size_storage_space - size_left_to_complete - size_new_torrent > DISK_SPACE_MARGIN:
         # enough space to add the new torrent
@@ -187,9 +187,9 @@ def space_for_torrent(client, torrents, entry, size_storage_space):
         logger.info(
             f'   >> {tor_complete["name"]} : {human_size(tor_complete["downloaded"])} ')
         logger.info(f'   :: size_storage_space({size_storage_space}) + space_to_del({space_to_del}) '+
-                    '- size_left_to_complete ({size_left_to_complete}) ' +
-                    '- size_new_torrent ({size_new_torrent}) '+
-                    '= {human_size(size_storage_space + space_to_del - size_left_to_complete - size_new_torrent)}')
+                    f'- size_left_to_complete ({size_left_to_complete}) ' +
+                    f'- size_new_torrent ({size_new_torrent}) '+
+                    f'= {human_size(size_storage_space + space_to_del - size_left_to_complete - size_new_torrent)}')
         if (size_storage_space + space_to_del - size_left_to_complete - size_new_torrent) > DISK_SPACE_MARGIN:
             for tor_to_del in torrents_to_del:
                 logger.info(
