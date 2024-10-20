@@ -677,8 +677,7 @@ def processRssFeeds(rsstask):
             # logger.info("   >> Skip: EXISTS" )
             continue
 
-        logger.info("%d: %s (%s)" % (rssFeedSum, item.title,
-                                     datetime.now().strftime("%H:%M:%S")))
+        logger.info(f"{rssFeedSum}: {item.title} ({datetime.now().strftime('%H:%M:%S')})")
 
         size_item = tryint(item.links[1]['length'])
         dbrssitem = RSSHistory(site=rsstask.site,
@@ -761,9 +760,8 @@ def processRssFeeds(rsstask):
         #     dbrssitem.reason = 'TMDb dupe'
         #     db.session.commit()
         #     continue
-        logger.info('   >> %s (%s), %s' %
-                    (imdbstr, humanSize(int(dbrssitem.size)), remove_passkey_from_url(rssDownloadLink)))
-        logger.info("   >> Entry: " + dl_entry.siteid_str)
+        logger.info(f'   >> ({humanSize(int(dbrssitem.size))}), {remove_passkey_from_url(rssDownloadLink)}')
+        # logger.info("   >> Entry: " + dl_entry.siteid_str)
 
         qbcat = rsstask.qbcategory if rsstask.qbcategory else ''
         dl_entry = qbfunc.DownloadEntry()
@@ -791,8 +789,8 @@ def processRssFeeds(rsstask):
     rsstask.accept_count += rssAccept
     db.session.commit()
 
-    logger.info('RSS %s - Total: %d, Accepted: %d (%s)' %
-                (rsstask.site, rssFeedSum, rssAccept, datetime.now().strftime("%H:%M:%S")))
+    logger.info(f'RSS {rsstask.site} - Total: {rssFeedSum}, Accepted: {rssAccept} ({datetime.now().strftime("%H:%M:%S")})')
+
 
 
 def rssJob(id):
@@ -808,7 +806,7 @@ def startApsScheduler():
         tasks = RSSTask.query
         for t in tasks:
             if not scheduler.get_job(str(t.id)):
-                logger.info(f"Start rss task: {t.rsslink}")
+                logger.info(f"Start rss task: {remove_passkey_from_url(t.rsslink)}")
                 job = scheduler.add_job(rssJob, 'interval',
                                         args=[t.id],
                                         minutes=t.task_interval,

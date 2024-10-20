@@ -159,12 +159,13 @@ def space_for_torrent(client, torrents, entry, size_storage_space):
     #             convert_size(size_left_to_complete))
 
     remain_space = size_storage_space - size_left_to_complete 
-    logger.info('   >> (hdd_free) %s - (uncomplete) %s - (new_tor) %s = %s.' % (convert_size(size_storage_space), convert_size(
-        size_left_to_complete), convert_size(size_new_torrent), convert_size(remain_space - size_new_torrent)))
+    logger.info( f'   >> (hdd_free) {convert_size(size_storage_space)} - (uncomplete) {convert_size(size_left_to_complete)} - '
+                f'(new_tor) {convert_size(size_new_torrent)} = {convert_size(remain_space - size_new_torrent)}.')
+
     if (remain_space - size_new_torrent) > DISK_SPACE_MARGIN:
         # if size_storage_space - size_left_to_complete - size_new_torrent > DISK_SPACE_MARGIN:
         # enough space to add the new torrent
-        logger.info('   => Add : (%s) %s.' % (convert_size(size_new_torrent), entry.title))
+        logger.info(f'   => Add : ({convert_size(size_new_torrent)}) {entry.title}.')
         return True
 
     # Sort completed torrents by seeding time
@@ -173,7 +174,7 @@ def space_for_torrent(client, torrents, entry, size_storage_space):
         key=lambda t: t['seeding_time'],
         reverse=True
     )
-    logger.info('   -- %s finished torrents. ' % len(completed_torrents))
+    logger.info(f'   -- {len(completed_torrents)} finished torrents.')
 
     # Loop through completed torrents and delete until there is enough space
     torrents_to_del = []
@@ -181,12 +182,11 @@ def space_for_torrent(client, torrents, entry, size_storage_space):
     for tor_complete in completed_torrents:
         torrents_to_del.append(tor_complete)
         space_to_del += tor_complete['downloaded']
-        logger.info('   >> %s : %s ' % (tor_complete['name'], convert_size(tor_complete['downloaded'])))
+        logger.info(f'   >> {tor_complete["name"]} : {convert_size(tor_complete["downloaded"])} ')
 
         if (size_storage_space + space_to_del - size_left_to_complete - size_new_torrent) > DISK_SPACE_MARGIN:
             for tor_to_del in torrents_to_del:
-                logger.info('Deleting: %s to free %s.' % (
-                    tor_to_del['name'], convert_size(tor_to_del['downloaded'])))
+                logger.info(f'Deleting: {tor_to_del["name"]} to free {convert_size(tor_to_del["downloaded"])}.')
                 qbDeleteTorrent(client, tor_to_del['hash'])
                 time.sleep(3)
             # Enough space now available, add the new torrent
@@ -216,16 +216,16 @@ def addQbitWithTag(entry, size_storage_space):
 
     try:
         torrents = qbClient.torrents_info()
-        logger.info('   >>  %d torrents in client.' % (len(torrents)))
+        logger.info(f'   >>  {len(torrents)} torrents in client.')
     except:
         logger.debug('  !! Fail to load torrent list.')
         # client.disconnect()
         return False
 
-    logger.info('   >> Free space: %s.' % convert_size(size_storage_space))
+    logger.info(f'   >> Free space: {convert_size(size_storage_space)}.')
     enough_space = space_for_torrent(qbClient, torrents, entry, size_storage_space)
     if not enough_space:
-        logger.info('   !! No enough space. Skip: {}', entry.title)
+        logger.info(f'   !! No enough space. Skip: {entry.title}')
         return False
 
     try:
