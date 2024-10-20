@@ -688,10 +688,10 @@ def processRssFeeds(rsstask):
         db.session.add(dbrssitem)
         db.session.commit()
 
-        size_gb = size_item / 1024 / 1024
+        size_gb = size_item / 1024 / 1024 / 1024
         logger.info(f"{rssFeedSum}: {item.title} ({humanSize(size_item)})")
 
-        if size_gb < rsstask.size_min or size_gb > rsstask.size_max:
+        if (size_gb < rsstask.size_min) or (size_gb > rsstask.size_max):
             dbrssitem.reason = 'SIZE_MIN_MAX'
             db.session.commit()
             logger.info("   >> Skip: SIZE_MIN_MAX " )

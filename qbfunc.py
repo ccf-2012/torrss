@@ -174,7 +174,7 @@ def space_for_torrent(client, torrents, entry, size_storage_space):
         key=lambda t: t['seeding_time'],
         reverse=True
     )
-    logger.info(f'   -- {len(completed_torrents)} finished torrents.')
+    logger.info(f'   -- {len(completed_torrents)}/{len(torrents)} finished/total torrents.')
 
     # Loop through completed torrents and delete until there is enough space
     torrents_to_del = []
@@ -216,13 +216,13 @@ def addQbitWithTag(entry, size_storage_space):
 
     try:
         torrents = qbClient.torrents_info()
-        logger.info(f'   >>  {len(torrents)} torrents in client.')
+        # logger.info(f'   >>  {len(torrents)} torrents in client.')
     except:
         logger.debug('  !! Fail to load torrent list.')
         # client.disconnect()
         return False
 
-    logger.info(f'   >> Free space: {convert_size(size_storage_space)}.')
+    # logger.info(f'   >> Free space: {convert_size(size_storage_space)}.')
     enough_space = space_for_torrent(qbClient, torrents, entry, size_storage_space)
     if not enough_space:
         logger.info(f'   !! No enough space. Skip: {entry.title}')
