@@ -677,8 +677,6 @@ def processRssFeeds(rsstask):
             # logger.info("   >> Skip: EXISTS" )
             continue
 
-        logger.info(f"{rssFeedSum}: {item.title} ({datetime.now().strftime('%H:%M:%S')})")
-
         size_item = tryint(item.links[1]['length'])
         dbrssitem = RSSHistory(site=rsstask.site,
                                tid=rsstask.id,
@@ -691,6 +689,8 @@ def processRssFeeds(rsstask):
         db.session.commit()
 
         size_gb = size_item / 1024 / 1024
+        logger.info(f"{rssFeedSum}: {item.title} ({humanSize(size_item)})")
+
         if size_gb < rsstask.size_min or size_gb > rsstask.size_max:
             dbrssitem.reason = 'SIZE_MIN_MAX'
             db.session.commit()
